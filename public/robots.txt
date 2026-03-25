@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://earth-opposites.vercel.app/sitemap.xml

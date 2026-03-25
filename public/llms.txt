@@ -1,0 +1,48 @@
+# Earth Opposites
+
+> An interactive web app that lets you discover what's on the exact opposite side of the world (the antipodal point). Click anywhere on a map, drag points on a 3D globe, or browse 120+ curated antipodal city pairs.
+
+## What is an antipodal point?
+
+An antipodal point (or antipode) is the point on Earth's surface that is diametrically opposite to a given location. If you could drill a straight line through the center of the Earth from where you stand, you'd emerge at the antipodal point. Mathematically, if you're at coordinates (lat, lng), your antipode is at (-lat, lng ± 180).
+
+## Features
+
+- **Dual Interactive Maps**: Two OpenStreetMap-powered map panels — one for your chosen point, one for its antipode. Click either map to set a point.
+- **3D Globe Visualization**: A d3-geo orthographic projection globe showing Natural Earth land boundaries. Drag to rotate, drag points to reposition them.
+- **120+ Antipodal City Pairs**: Curated pairs of real cities that sit (nearly) opposite each other on the globe, such as Madrid ↔ Weber (NZ), Shanghai ↔ Buenos Aires, and Wellington ↔ Salamanca.
+- **Real-Time Geocoding**: Automatically resolves coordinates to human-readable place names via Nominatim reverse geocoding.
+- **Search & Filter**: Filter the city pair list by name or country.
+- **Fun Facts**: Each curated pair includes a fun geographic fact.
+- **Random Pair on Load**: Every visit starts with a randomly selected antipodal pair.
+
+## How it works
+
+1. User clicks on either map panel or drags a point on the 3D globe.
+2. The app computes the antipodal point using the formula: antipode(lat, lng) = (-lat, lng ± 180).
+3. Both maps update to show the selected point and its antipode.
+4. Reverse geocoding runs to display place names for both locations.
+5. Users can also browse and select from 120+ pre-curated antipodal city pairs.
+
+## Technology
+
+- React 19 with TypeScript
+- Vite build tool
+- Leaflet for interactive maps
+- d3-geo for 3D globe rendering
+- world-atlas / TopoJSON for land boundaries
+- Nominatim for reverse geocoding
+
+## Data
+
+The curated city pair dataset was built by:
+1. Taking a database of world cities with population > 10,000
+2. Computing the mathematical antipode for each city
+3. Finding the nearest city to each antipode using haversine distance
+4. Keeping pairs where the offset distance is < 200 km
+5. De-duplicating symmetric pairs and sorting by accuracy
+
+## Source
+
+- Website: https://earth-opposites.vercel.app
+- Source code: https://github.com/dokluch/earth_opposites
