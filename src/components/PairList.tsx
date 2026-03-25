@@ -25,9 +25,15 @@ export default function PairList({ pairs, activePairId, onSelect }: Props) {
   return (
     <div className="pair-list">
       <h3 className="pair-list-title">Antipodal City Pairs</h3>
-      <p className="pair-list-subtitle">Cities on exact opposite sides of the Earth</p>
+      <p className="pair-list-subtitle">
+        Cities on exact opposite sides of the Earth
+      </p>
       <div className="pair-search-wrapper">
+        <label htmlFor="pair-search" className="sr-only">
+          Search by city or country
+        </label>
         <input
+          id="pair-search"
           className="pair-search"
           type="text"
           placeholder="Search by city or country…"
@@ -41,6 +47,7 @@ export default function PairList({ pairs, activePairId, onSelect }: Props) {
             <button
               className={`pair-card ${activePairId === p.id ? "pair-card--active" : ""}`}
               onClick={() => onSelect(p)}
+              aria-pressed={activePairId === p.id}
             >
               <span className="pair-card-cities">
                 <span className="pair-city pair-city-a">{p.cityA.name}</span>

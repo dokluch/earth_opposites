@@ -39,6 +39,18 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -51,6 +63,7 @@ body {
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 a {
@@ -167,6 +180,13 @@ a:hover {
   cursor: pointer;
 }
 
+@media (pointer: coarse) {
+  .map-marker {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 @keyframes marker-pulse {
   0% { box-shadow: 0 0 0 0 oklch(0.72 0.15 150 / 0.5); }
   70% { box-shadow: 0 0 0 16px oklch(0.72 0.15 150 / 0); }
@@ -184,6 +204,14 @@ a:hover {
   width: clamp(260px, 30vw, 400px);
   height: clamp(260px, 30vw, 400px);
   border-radius: var(--radius-md);
+  touch-action: none;
+}
+
+@media (max-width: 900px) {
+  .globe-canvas {
+    width: clamp(260px, 65vw, 360px);
+    height: clamp(260px, 65vw, 360px);
+  }
 }
 
 .info-panel {
@@ -240,6 +268,28 @@ a:hover {
   justify-content: flex-end;
 }
 
+@media (max-width: 600px) {
+  .info-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .info-point {
+    min-width: 0;
+  }
+
+  .info-point-b {
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .info-connector {
+    flex-direction: row;
+    align-self: center;
+  }
+}
+
 .info-dot {
   width: 10px;
   height: 10px;
@@ -273,6 +323,12 @@ a:hover {
   flex-shrink: 0;
 }
 
+@media (max-width: 600px) {
+  .info-connector svg {
+    transform: rotate(90deg);
+  }
+}
+
 .info-diameter {
   font-family: var(--font-mono);
   font-size: 0.65rem;
@@ -287,6 +343,7 @@ a:hover {
   padding-top: 16px;
   border-top: 1px solid var(--border-subtle);
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .info-stat {
@@ -371,12 +428,14 @@ a:hover {
 
 .pair-search:focus {
   border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
 }
 
 .pair-list-items {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 10px;
 }
 
@@ -398,10 +457,17 @@ a:hover {
     transform 0.15s var(--ease-out);
 }
 
-.pair-card:hover {
-  background: var(--bg-hover);
-  border-color: oklch(0.35 0.03 240);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .pair-card:hover {
+    background: var(--bg-hover);
+    border-color: oklch(0.35 0.03 240);
+    transform: translateY(-1px);
+  }
+}
+
+.pair-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .pair-card--active {
@@ -447,6 +513,20 @@ a:hover {
   font-size: 0.75rem;
   color: var(--text-muted);
   border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-github {
+  color: var(--text-muted);
+  transition: color 0.2s var(--ease-out);
+}
+
+.footer-github:hover {
+  color: var(--text-primary);
+  text-decoration: none;
 }
 
 .footer a {
@@ -489,5 +569,26 @@ a:hover {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .map-container {
+    min-height: 280px;
+  }
+
+  .footer {
+    font-size: 0.7rem;
+    line-height: 1.6;
   }
 }

@@ -39,8 +39,10 @@ export function formatCoord(p: LatLng): string {
 export function throughEarthKm(a: LatLng, b: LatLng): number {
   // For true antipodes this is ~12 742 km. We compute the chord length.
   const toRad = (d: number) => (d * Math.PI) / 180;
-  const phi1 = toRad(a.lat), lam1 = toRad(a.lng);
-  const phi2 = toRad(b.lat), lam2 = toRad(b.lng);
+  const phi1 = toRad(a.lat),
+    lam1 = toRad(a.lng);
+  const phi2 = toRad(b.lat),
+    lam2 = toRad(b.lng);
   // Convert to cartesian
   const x1 = Math.cos(phi1) * Math.cos(lam1);
   const y1 = Math.cos(phi1) * Math.sin(lam1);
@@ -48,7 +50,9 @@ export function throughEarthKm(a: LatLng, b: LatLng): number {
   const x2 = Math.cos(phi2) * Math.cos(lam2);
   const y2 = Math.cos(phi2) * Math.sin(lam2);
   const z2 = Math.sin(phi2);
-  const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
+  const dx = x2 - x1,
+    dy = y2 - y1,
+    dz = z2 - z1;
   return R_EARTH_KM * Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
@@ -72,7 +76,9 @@ export async function reverseGeocode(p: LatLng): Promise<string | null> {
       parts.push(addr.city || addr.town || addr.village || addr.hamlet);
     if (addr.state) parts.push(addr.state);
     if (addr.country) parts.push(addr.country);
-    return parts.length ? parts.join(", ") : data.display_name?.split(",").slice(0, 3).join(",") || null;
+    return parts.length
+      ? parts.join(", ")
+      : data.display_name?.split(",").slice(0, 3).join(",") || null;
   } catch {
     return null;
   }

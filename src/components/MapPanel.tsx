@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import maplibregl from "maplibre-gl";
 import type { LatLng } from "../lib/antipode";
 
@@ -37,7 +37,8 @@ export default function MapPanel({
             type: "raster",
             tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
             tileSize: 256,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
           },
         },
         layers: [
@@ -106,15 +107,6 @@ export default function MapPanel({
       map.flyTo({ center: [marker.lng, marker.lat], zoom: 5, duration: 1800 });
     }
   }, [marker, accentColor]);
-
-  // On center change (for antipode map)
-  const flyTo = useCallback((c: LatLng) => {
-    mapRef.current?.flyTo({ center: [c.lng, c.lat], zoom: 5, duration: 1800 });
-  }, []);
-
-  useEffect(() => {
-    if (marker) flyTo(marker);
-  }, [marker, flyTo]);
 
   return (
     <div className="map-panel">

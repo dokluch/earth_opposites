@@ -13,7 +13,12 @@ interface Props {
 
 type Land = GeoJSON.FeatureCollection | GeoJSON.MultiPolygon;
 
-export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }: Props) {
+export default function GlobeVis({
+  pointA,
+  pointB,
+  onPointADrag,
+  onPointBDrag,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const rotRef = useRef<[number, number]>([0, -20]);
@@ -40,7 +45,9 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
 
   useEffect(() => {
     import("world-atlas/land-110m.json").then((worldRaw) => {
-      const world = worldRaw.default as unknown as Topology<{ land: GeometryCollection }>;
+      const world = worldRaw.default as unknown as Topology<{
+        land: GeometryCollection;
+      }>;
       const landGeo = topojson.feature(world, world.objects.land);
       setLand(landGeo as Land);
     });
@@ -83,7 +90,14 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
       ctx.fill();
 
       // Ocean
-      const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.05, cx, cy, r);
+      const grad = ctx.createRadialGradient(
+        cx - r * 0.2,
+        cy - r * 0.2,
+        r * 0.05,
+        cx,
+        cy,
+        r,
+      );
       grad.addColorStop(0, "oklch(0.22 0.04 220)");
       grad.addColorStop(0.6, "oklch(0.16 0.04 230)");
       grad.addColorStop(1, "oklch(0.10 0.03 240)");
@@ -161,7 +175,11 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
             const rP = (-rotPhi * Math.PI) / 180;
             const cp = Math.cos(phi);
             px = cx + r * cp * Math.sin(lam - rL);
-            py = cy - r * (Math.cos(rP) * Math.sin(phi) - Math.sin(rP) * cp * Math.cos(lam - rL));
+            py =
+              cy -
+              r *
+                (Math.cos(rP) * Math.sin(phi) -
+                  Math.sin(rP) * cp * Math.cos(lam - rL));
           }
           const op = visible ? 1 : 0.2;
           const sz = visible ? 7 : 4;
@@ -187,8 +205,22 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
           ctx.globalAlpha = 1;
         };
 
-        drawPt(pa, visA, "oklch(0.72 0.19 150)", "oklch(0.90 0.10 150)", !!onPointADragRef.current, pA);
-        drawPt(pb, visB, "oklch(0.68 0.20 25)", "oklch(0.85 0.12 25)", !!onPointBDragRef.current, pB);
+        drawPt(
+          pa,
+          visA,
+          "oklch(0.72 0.19 150)",
+          "oklch(0.90 0.10 150)",
+          !!onPointADragRef.current,
+          pA,
+        );
+        drawPt(
+          pb,
+          visB,
+          "oklch(0.68 0.20 25)",
+          "oklch(0.85 0.12 25)",
+          !!onPointBDragRef.current,
+          pB,
+        );
       }
 
       // Rim
@@ -220,7 +252,10 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
 
-    const hitTest = (sx: number, sy: number): "pointA" | "pointB" | "globe" | null => {
+    const hitTest = (
+      sx: number,
+      sy: number,
+    ): "pointA" | "pointB" | "globe" | null => {
       if (pointARef.current) {
         const pa = projection([pointARef.current.lng, pointARef.current.lat]);
         if (pa && Math.hypot(sx - pa[0], sy - pa[1]) < 16) return "pointA";
@@ -249,8 +284,10 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
         const inv = projection.invert?.([mx, my]);
         if (inv) {
           const ll: LatLng = { lat: inv[1], lng: inv[0] };
-          if (d.target === "pointA" && onPointADragRef.current) onPointADragRef.current(ll);
-          if (d.target === "pointB" && onPointBDragRef.current) onPointBDragRef.current(ll);
+          if (d.target === "pointA" && onPointADragRef.current)
+            onPointADragRef.current(ll);
+          if (d.target === "pointB" && onPointBDragRef.current)
+            onPointBDragRef.current(ll);
         }
       }
     };
@@ -260,7 +297,13 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
       const target = hitTest(pos.x, pos.y);
       if (!target) return;
       autoRotateRef.current = false;
-      dragRef.current = { active: true, startX: pos.x, startY: pos.y, startRot: [...rotRef.current], target };
+      dragRef.current = {
+        active: true,
+        startX: pos.x,
+        startY: pos.y,
+        startRot: [...rotRef.current],
+        target,
+      };
       canvas.style.cursor = target === "globe" ? "grabbing" : "move";
       e.preventDefault();
     };
@@ -292,7 +335,13 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
         const target = hitTest(pos.x, pos.y);
         if (!target) return;
         autoRotateRef.current = false;
-        dragRef.current = { active: true, startX: pos.x, startY: pos.y, startRot: [...rotRef.current], target };
+        dragRef.current = {
+          active: true,
+          startX: pos.x,
+          startY: pos.y,
+          startRot: [...rotRef.current],
+          target,
+        };
         e.preventDefault();
       }
     };
@@ -328,11 +377,18 @@ export default function GlobeVis({ pointA, pointB, onPointADrag, onPointBDrag }:
   return <canvas ref={canvasRef} className="globe-canvas" />;
 }
 
-function geoDistToCenter(lat: number, lng: number, rot: [number, number, number]): number {
+function geoDistToCenter(
+  lat: number,
+  lng: number,
+  rot: [number, number, number],
+): number {
   const p1 = (-rot[1] * Math.PI) / 180;
   const l1 = (-rot[0] * Math.PI) / 180;
   const p2 = (lat * Math.PI) / 180;
   const l2 = (lng * Math.PI) / 180;
-  const d = Math.acos(Math.sin(p1) * Math.sin(p2) + Math.cos(p1) * Math.cos(p2) * Math.cos(l2 - l1));
+  const d = Math.acos(
+    Math.sin(p1) * Math.sin(p2) +
+      Math.cos(p1) * Math.cos(p2) * Math.cos(l2 - l1),
+  );
   return (d * 180) / Math.PI;
 }
