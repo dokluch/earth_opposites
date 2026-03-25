@@ -32,17 +32,21 @@ export default memo(function MapPanel({
       center: [center.lat, center.lng],
       zoom: 2,
       zoomControl: false,
-      attributionControl: true,
+      attributionControl: false,
       dragging: interactive,
       scrollWheelZoom: interactive,
       doubleClickZoom: interactive,
       touchZoom: interactive,
     });
 
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+    L.control
+      .attribution({ prefix: false })
+      .addAttribution(
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
+      )
+      .addTo(map);
 
     if (interactive) {
       L.control.zoom({ position: "bottomright" }).addTo(map);
