@@ -96,11 +96,7 @@ export default function GlobeVis({
     resize();
     window.addEventListener("resize", resize);
 
-    const ensureGradients = (
-      cx: number,
-      cy: number,
-      r: number,
-    ) => {
+    const ensureGradients = (cx: number, cy: number, r: number) => {
       const c = cachedGradsRef.current;
       if (c.ocean && c.cx === cx && c.cy === cy && c.r === r) return c;
       const ocean = ctx.createRadialGradient(
@@ -128,7 +124,8 @@ export default function GlobeVis({
       animRef.current = requestAnimationFrame(draw);
     };
 
-    const easeInOut = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+    const easeInOut = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 
     const lerpAngle = (a: number, b: number, t: number) => {
       let d = b - a;
@@ -139,13 +136,18 @@ export default function GlobeVis({
     };
 
     const draw = () => {
-      const isAnimatingRot = targetRotRef.current !== null && rotAnimRef.current < 1;
-      const isAutoRotating =
-        autoRotateRef.current && !dragRef.current.active;
+      const isAnimatingRot =
+        targetRotRef.current !== null && rotAnimRef.current < 1;
+      const isAutoRotating = autoRotateRef.current && !dragRef.current.active;
       const isDragging = dragRef.current.active;
 
       // Skip if nothing changed and we're not animating
-      if (!isAutoRotating && !isDragging && !isAnimatingRot && !needsRedrawRef.current) {
+      if (
+        !isAutoRotating &&
+        !isDragging &&
+        !isAnimatingRot &&
+        !needsRedrawRef.current
+      ) {
         scheduleLoop();
         return;
       }
