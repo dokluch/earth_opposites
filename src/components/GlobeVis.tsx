@@ -42,6 +42,8 @@ export default function GlobeVis({
   }>({ ocean: null, atmo: null, cx: 0, cy: 0, r: 0 });
   const targetRotRef = useRef<[number, number] | null>(null);
   const rotAnimRef = useRef(0); // 0 = done, 0..1 = in-progress
+  const visibleRef = useRef(true);
+  const scheduleRef = useRef<(() => void) | null>(null);
   const [land, setLand] = useState<Land | null>(null);
 
   // Keep props in refs so the animation effect doesn't re-run on every change
@@ -56,13 +58,13 @@ export default function GlobeVis({
   needsRedrawRef.current = true;
 
   // When pointA changes, smoothly rotate globe to face it
-  const prevPointARef = useRef(pointA);
-  if (pointA && pointA !== prevPointARef.current) {
-    prevPointARef.current = pointA;
-    targetRotRef.current = [-pointA.lng, -pointA.lat];
-    rotAnimRef.current = 0.001; // start animation
-    autoRotateRef.current = false;
-  }
+  useEffect(() => {
+    if (pointA) {
+      targetRotRef.current = [-pointA.lng, -pointA.lat];
+      rotAnimRef.current = 0.001;
+      autoRotateRef.current = false;
+    }
+  }, [pointA]);
 
   useEffect(() => {
     import("world-atlas/land-110m.json").then((worldRaw) => {
@@ -72,6 +74,24 @@ export default function GlobeVis({
       const landGeo = topojson.feature(world, world.objects.land);
       setLand(landGeo as Land);
     });
+  }, []);
+
+  // Pause animation loop when canvas is off-screen
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = entry.isIntersecting;
+        if (entry.isIntersecting) {
+          needsRedrawRef.current = true;
+          scheduleRef.current?.();
+        }
+      },
+      { threshold: 0 },
+    );
+    observer.observe(canvas);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -120,9 +140,10 @@ export default function GlobeVis({
     let running = true;
 
     const scheduleLoop = () => {
-      if (!running) return;
+      if (!running || !visibleRef.current) return;
       animRef.current = requestAnimationFrame(draw);
     };
+    scheduleRef.current = scheduleLoop;
 
     const easeInOut = (t: number) =>
       t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
@@ -297,22 +318,12 @@ export default function GlobeVis({
           ctx.globalAlpha = 1;
         };
 
-        drawPt(
-          pa,
-          visA,
-          "oklch(0.72 0.19 150)",
-          "oklch(0.90 0.10 150)",
-          !!onPointADragRef.current,
-          pA,
-        );
-        drawPt(
-          pb,
-          visB,
-          "oklch(0.68 0.20 25)",
-          "oklch(0.85 0.12 25)",
-          !!onPointBDragRef.current,
-          pB,
-        );
+        // Draw back-facing point first so front-facing point renders on top
+        const ptA = { coords: pa, vis: visA, color: "oklch(0.72 0.19 150)", hl: "oklch(0.90 0.10 150)", draggable: !!onPointADragRef.current, ll: pA };
+        const ptB = { coords: pb, vis: visB, color: "oklch(0.68 0.20 25)", hl: "oklch(0.85 0.12 25)", draggable: !!onPointBDragRef.current, ll: pB };
+        const [back, front] = visA && !visB ? [ptB, ptA] : visB && !visA ? [ptA, ptB] : distA <= distB ? [ptB, ptA] : [ptA, ptB];
+        drawPt(back.coords, back.vis, back.color, back.hl, back.draggable, back.ll);
+        drawPt(front.coords, front.vis, front.color, front.hl, front.draggable, front.ll);
       }
 
       // Rim
@@ -415,8 +426,25 @@ export default function GlobeVis({
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
 
+    const onDblClick = () => {
+      targetRotRef.current = [0, -20];
+      rotAnimRef.current = 0.001;
+      autoRotateRef.current = false;
+      needsRedrawRef.current = true;
+    };
+    canvas.addEventListener("dblclick", onDblClick);
+
+    let lastTapTime = 0;
     const onTS = (e: TouchEvent) => {
       if (e.touches.length === 1) {
+        const now = Date.now();
+        if (now - lastTapTime < 350) {
+          onDblClick();
+          lastTapTime = 0;
+          e.preventDefault();
+          return;
+        }
+        lastTapTime = now;
         const pos = getPos(e.touches[0]);
         const target = hitTest(pos.x, pos.y);
         if (!target) return;
@@ -453,6 +481,7 @@ export default function GlobeVis({
       cancelAnimationFrame(animRef.current);
       window.removeEventListener("resize", resize);
       canvas.removeEventListener("mousedown", onDown);
+      canvas.removeEventListener("dblclick", onDblClick);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       canvas.removeEventListener("touchstart", onTS);
@@ -461,7 +490,14 @@ export default function GlobeVis({
     };
   }, [land]);
 
-  return <canvas ref={canvasRef} className="globe-canvas" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="globe-canvas"
+      role="img"
+      aria-label="Interactive 3D globe showing antipodal points"
+    />
+  );
 }
 
 function geoDistToCenter(

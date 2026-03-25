@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, memo } from "react";
 import type { AntipodalPair } from "../data/antipodalCities";
 
 interface Props {
@@ -7,8 +7,15 @@ interface Props {
   onSelect: (pair: AntipodalPair) => void;
 }
 
-export default function PairList({ pairs, activePairId, onSelect }: Props) {
+const PAGE_SIZE = 20;
+
+export default memo(function PairList({
+  pairs,
+  activePairId,
+  onSelect,
+}: Props) {
   const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -21,6 +28,14 @@ export default function PairList({ pairs, activePairId, onSelect }: Props) {
         p.cityB.country.toLowerCase().includes(q),
     );
   }, [pairs, query]);
+
+  // Reset visible count when search changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [query]);
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
 
   return (
     <div className="pair-list">
@@ -42,7 +57,7 @@ export default function PairList({ pairs, activePairId, onSelect }: Props) {
         />
       </div>
       <ul className="pair-list-items">
-        {filtered.map((p) => (
+        {visible.map((p) => (
           <li key={p.id}>
             <button
               className={`pair-card ${activePairId === p.id ? "pair-card--active" : ""}`}
@@ -62,6 +77,16 @@ export default function PairList({ pairs, activePairId, onSelect }: Props) {
           </li>
         ))}
       </ul>
+      {hasMore && (
+        <div className="pair-list-more">
+          <button
+            className="pair-list-more-btn"
+            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+          >
+            Show more ({filtered.length - visibleCount} remaining)
+          </button>
+        </div>
+      )}
     </div>
   );
-}
+});

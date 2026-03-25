@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, memo } from "react";
 import L from "leaflet";
 import type { LatLng } from "../lib/antipode";
 
@@ -12,7 +12,7 @@ interface Props {
   accentColor: string;
 }
 
-export default function MapPanel({
+export default memo(function MapPanel({
   id,
   center,
   marker,
@@ -113,4 +113,4 @@ export default function MapPanel({
       <div ref={containerRef} className="map-container" />
     </div>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { LatLng } from "../lib/antipode";
 import { formatCoord, haversineKm, throughEarthKm } from "../lib/antipode";
 
@@ -10,7 +11,7 @@ interface Props {
   fact: string | null;
 }
 
-export default function InfoPanel({
+export default memo(function InfoPanel({
   pointA,
   pointB,
   placeA,
@@ -135,4 +136,4 @@ export default function InfoPanel({
       )}
     </div>
   );
-}
+});

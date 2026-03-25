@@ -59,12 +59,17 @@ export function throughEarthKm(a: LatLng, b: LatLng): number {
 /**
  * Reverse-geocode a lat/lng to a place name using OpenStreetMap Nominatim.
  * Rate-limited (1 req/s policy), returns null on failure.
+ * Accepts an AbortSignal to cancel in-flight requests.
  */
-export async function reverseGeocode(p: LatLng): Promise<string | null> {
+export async function reverseGeocode(
+  p: LatLng,
+  signal?: AbortSignal,
+): Promise<string | null> {
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${p.lat}&lon=${p.lng}&format=json&zoom=10&addressdetails=1`;
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${encodeURIComponent(p.lat)}&lon=${encodeURIComponent(p.lng)}&format=json&zoom=10&addressdetails=1`;
     const res = await fetch(url, {
       headers: { "User-Agent": "EarthOpposites/1.0 (educational app)" },
+      signal,
     });
     if (!res.ok) return null;
     const data = await res.json();

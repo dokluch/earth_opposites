@@ -603,18 +603,6 @@ const pairs: AntipodalPair[] = [
 
   /* ── New Zealand ↔ Iberian Peninsula ──────────────────── */
   {
-    id: 49,
-    cityA: {
-      name: "Auckland",
-      country: "New Zealand",
-      lat: -36.8485,
-      lng: 174.7633,
-    },
-    cityB: { name: "Seville", country: "Spain", lat: 37.3891, lng: -5.9845 },
-    offsetKm: 120,
-    fact: "New Zealand's largest city and Andalusia's flamenco capital are classic near-antipodes.",
-  },
-  {
     id: 50,
     cityA: {
       name: "Wellington",
@@ -625,30 +613,6 @@ const pairs: AntipodalPair[] = [
     cityB: { name: "Salamanca", country: "Spain", lat: 40.9688, lng: -5.6631 },
     offsetKm: 105,
     fact: "New Zealand's windy capital and Spain's golden university city face each other through the Earth.",
-  },
-  {
-    id: 51,
-    cityA: {
-      name: "Christchurch",
-      country: "New Zealand",
-      lat: -43.5321,
-      lng: 172.6362,
-    },
-    cityB: { name: "A Coruña", country: "Spain", lat: 43.3713, lng: -8.396 },
-    offsetKm: 95,
-    fact: "Canterbury's garden city and Galicia's rainy Atlantic port are one of the tightest land-antipode pairs.",
-  },
-  {
-    id: 52,
-    cityA: {
-      name: "Hamilton",
-      country: "New Zealand",
-      lat: -37.787,
-      lng: 175.2793,
-    },
-    cityB: { name: "Córdoba", country: "Spain", lat: 37.8882, lng: -4.7794 },
-    offsetKm: 80,
-    fact: "The Waikato's agricultural hub and the city of the Mezquita share an almost perfect through-Earth alignment.",
   },
   {
     id: 53,
@@ -1219,15 +1183,6 @@ const pairs: AntipodalPair[] = [
     },
     offsetKm: 185,
     fact: "Costa Rica's capital and the Spice Islands' clove-scented Ternate share a cross-global latitude swap.",
-  },
-
-  /* ── South Pacific ↔ West Africa ──────────────────────── */
-  {
-    id: 98,
-    cityA: { name: "Suva", country: "Fiji", lat: -18.1416, lng: 178.4419 },
-    cityB: { name: "Timbuktu", country: "Mali", lat: 16.7666, lng: -3.0026 },
-    offsetKm: 195,
-    fact: "The South Pacific capital and the Saharan legendary city — both famously remote — are near-antipodal.",
   },
 
   /* ── Australia ↔ Atlantic ─────────────────────────────── */

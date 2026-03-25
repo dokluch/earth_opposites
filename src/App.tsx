@@ -19,70 +19,78 @@ function App() {
   const [activePairId, setActivePairId] = useState<number | null>(null);
   const [fact, setFact] = useState<string | null>(null);
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const didInit = useRef(false);
+
+  // Clean up pending geocode on unmount
+  useEffect(() => {
+    return () => {
+      if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const geocodeBoth = useCallback((a: LatLng, b: LatLng) => {
     setLoading(true);
     setPlaceA(null);
     setPlaceB(null);
     if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     geocodeTimer.current = setTimeout(async () => {
-      const [nameA, nameB] = await Promise.all([
-        reverseGeocode(a),
-        reverseGeocode(b),
-      ]);
-      setPlaceA(nameA);
-      setPlaceB(nameB);
-      setLoading(false);
+      try {
+        const [nameA, nameB] = await Promise.all([
+          reverseGeocode(a, controller.signal),
+          reverseGeocode(b, controller.signal),
+        ]);
+        if (!controller.signal.aborted) {
+          setPlaceA(nameA);
+          setPlaceB(nameB);
+          setLoading(false);
+        }
+      } catch {
+        if (!controller.signal.aborted) setLoading(false);
+      }
     }, 350);
   }, []);
 
-  const handleMapClickA = useCallback(
-    (latlng: LatLng) => {
+  const handlePointUpdate = useCallback(
+    (source: "a" | "b", latlng: LatLng) => {
       const anti = antipode(latlng);
-      setPointA(latlng);
-      setPointB(anti);
+      if (source === "a") {
+        setPointA(latlng);
+        setPointB(anti);
+        geocodeBoth(latlng, anti);
+      } else {
+        setPointB(latlng);
+        setPointA(anti);
+        geocodeBoth(anti, latlng);
+      }
       setActivePairId(null);
       setFact(null);
-      geocodeBoth(latlng, anti);
     },
     [geocodeBoth],
+  );
+
+  const handleMapClickA = useCallback(
+    (latlng: LatLng) => handlePointUpdate("a", latlng),
+    [handlePointUpdate],
   );
 
   const handleMapClickB = useCallback(
-    (latlng: LatLng) => {
-      const anti = antipode(latlng);
-      setPointB(latlng);
-      setPointA(anti);
-      setActivePairId(null);
-      setFact(null);
-      geocodeBoth(anti, latlng);
-    },
-    [geocodeBoth],
+    (latlng: LatLng) => handlePointUpdate("b", latlng),
+    [handlePointUpdate],
   );
 
   const handleGlobeDragA = useCallback(
-    (latlng: LatLng) => {
-      const anti = antipode(latlng);
-      setPointA(latlng);
-      setPointB(anti);
-      setActivePairId(null);
-      setFact(null);
-      geocodeBoth(latlng, anti);
-    },
-    [geocodeBoth],
+    (latlng: LatLng) => handlePointUpdate("a", latlng),
+    [handlePointUpdate],
   );
 
   const handleGlobeDragB = useCallback(
-    (latlng: LatLng) => {
-      const anti = antipode(latlng);
-      setPointB(latlng);
-      setPointA(anti);
-      setActivePairId(null);
-      setFact(null);
-      geocodeBoth(anti, latlng);
-    },
-    [geocodeBoth],
+    (latlng: LatLng) => handlePointUpdate("b", latlng),
+    [handlePointUpdate],
   );
 
   const handlePairSelect = useCallback((pair: AntipodalPair) => {
