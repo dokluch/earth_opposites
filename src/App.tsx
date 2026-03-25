@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import "maplibre-gl/dist/maplibre-gl.css";
+import "leaflet/dist/leaflet.css";
 import MapPanel from "./components/MapPanel";
 import GlobeVis from "./components/GlobeVis";
 import InfoPanel from "./components/InfoPanel";
@@ -238,11 +238,11 @@ function App() {
           </a>
           &middot; Rendered with{" "}
           <a
-            href="https://maplibre.org"
+            href="https://leafletjs.com"
             target="_blank"
             rel="noopener noreferrer"
           >
-            MapLibre GL
+            Leaflet
           </a>
         </p>
       </footer>

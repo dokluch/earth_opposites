@@ -30,7 +30,18 @@ export default function GlobeVis({
     startRot: [number, number];
     target: "globe" | "pointA" | "pointB" | null;
   }>({ active: false, startX: 0, startY: 0, startRot: [0, -20], target: null });
-  const projRef = useRef(geoOrthographic().clipAngle(90).precision(0.5));
+  const projRef = useRef(geoOrthographic().clipAngle(90).precision(1.5));
+  const needsRedrawRef = useRef(true);
+  const sizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
+  const cachedGradsRef = useRef<{
+    ocean: CanvasGradient | null;
+    atmo: CanvasGradient | null;
+    cx: number;
+    cy: number;
+    r: number;
+  }>({ ocean: null, atmo: null, cx: 0, cy: 0, r: 0 });
+  const targetRotRef = useRef<[number, number] | null>(null);
+  const rotAnimRef = useRef(0); // 0 = done, 0..1 = in-progress
   const [land, setLand] = useState<Land | null>(null);
 
   // Keep props in refs so the animation effect doesn't re-run on every change
@@ -42,6 +53,16 @@ export default function GlobeVis({
   pointBRef.current = pointB;
   onPointADragRef.current = onPointADrag;
   onPointBDragRef.current = onPointBDrag;
+  needsRedrawRef.current = true;
+
+  // When pointA changes, smoothly rotate globe to face it
+  const prevPointARef = useRef(pointA);
+  if (pointA && pointA !== prevPointARef.current) {
+    prevPointARef.current = pointA;
+    targetRotRef.current = [-pointA.lng, -pointA.lat];
+    rotAnimRef.current = 0.001; // start animation
+    autoRotateRef.current = false;
+  }
 
   useEffect(() => {
     import("world-atlas/land-110m.json").then((worldRaw) => {
@@ -68,11 +89,90 @@ export default function GlobeVis({
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sizeRef.current = { w: rect.width, h: rect.height };
+      cachedGradsRef.current = { ocean: null, atmo: null, cx: 0, cy: 0, r: 0 };
+      needsRedrawRef.current = true;
     };
     resize();
     window.addEventListener("resize", resize);
 
+    const ensureGradients = (
+      cx: number,
+      cy: number,
+      r: number,
+    ) => {
+      const c = cachedGradsRef.current;
+      if (c.ocean && c.cx === cx && c.cy === cy && c.r === r) return c;
+      const ocean = ctx.createRadialGradient(
+        cx - r * 0.2,
+        cy - r * 0.2,
+        r * 0.05,
+        cx,
+        cy,
+        r,
+      );
+      ocean.addColorStop(0, "oklch(0.22 0.04 220)");
+      ocean.addColorStop(0.6, "oklch(0.16 0.04 230)");
+      ocean.addColorStop(1, "oklch(0.10 0.03 240)");
+      const atmo = ctx.createRadialGradient(cx, cy, r * 0.95, cx, cy, r * 1.15);
+      atmo.addColorStop(0, "oklch(0.40 0.08 200 / 0.08)");
+      atmo.addColorStop(1, "oklch(0.40 0.08 200 / 0)");
+      cachedGradsRef.current = { ocean, atmo, cx, cy, r };
+      return cachedGradsRef.current;
+    };
+
+    let running = true;
+
+    const scheduleLoop = () => {
+      if (!running) return;
+      animRef.current = requestAnimationFrame(draw);
+    };
+
+    const easeInOut = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+
+    const lerpAngle = (a: number, b: number, t: number) => {
+      let d = b - a;
+      // Shortest path on the circle
+      if (d > 180) d -= 360;
+      if (d < -180) d += 360;
+      return a + d * t;
+    };
+
     const draw = () => {
+      const isAnimatingRot = targetRotRef.current !== null && rotAnimRef.current < 1;
+      const isAutoRotating =
+        autoRotateRef.current && !dragRef.current.active;
+      const isDragging = dragRef.current.active;
+
+      // Skip if nothing changed and we're not animating
+      if (!isAutoRotating && !isDragging && !isAnimatingRot && !needsRedrawRef.current) {
+        scheduleLoop();
+        return;
+      }
+      needsRedrawRef.current = false;
+
+      // Smooth rotation toward target point
+      if (isAnimatingRot && targetRotRef.current) {
+        rotAnimRef.current = Math.min(1, rotAnimRef.current + 0.018);
+        const t = easeInOut(rotAnimRef.current);
+        const [curLam, curPhi] = rotRef.current;
+        const [tgtLam, tgtPhi] = targetRotRef.current;
+        rotRef.current = [
+          lerpAngle(curLam, tgtLam, t),
+          lerpAngle(curPhi, tgtPhi, t),
+        ];
+        if (rotAnimRef.current >= 1) {
+          rotRef.current = [targetRotRef.current[0], targetRotRef.current[1]];
+          targetRotRef.current = null;
+          // Resume auto-rotate after a pause
+          setTimeout(() => {
+            if (!dragRef.current.active) autoRotateRef.current = true;
+          }, 3000);
+        }
+      } else if (isAutoRotating) {
+        rotRef.current = [rotRef.current[0] - 0.06, rotRef.current[1]];
+      }
+
       const w = canvas.width / dpr;
       const h = canvas.height / dpr;
       const cx = w / 2;
@@ -90,20 +190,10 @@ export default function GlobeVis({
       ctx.fill();
 
       // Ocean
-      const grad = ctx.createRadialGradient(
-        cx - r * 0.2,
-        cy - r * 0.2,
-        r * 0.05,
-        cx,
-        cy,
-        r,
-      );
-      grad.addColorStop(0, "oklch(0.22 0.04 220)");
-      grad.addColorStop(0.6, "oklch(0.16 0.04 230)");
-      grad.addColorStop(1, "oklch(0.10 0.03 240)");
+      const grads = ensureGradients(cx, cy, r);
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
+      ctx.fillStyle = grads.ocean!;
       ctx.fill();
 
       // Graticule
@@ -231,21 +321,15 @@ export default function GlobeVis({
       ctx.stroke();
 
       // Atmosphere
-      const ag = ctx.createRadialGradient(cx, cy, r * 0.95, cx, cy, r * 1.15);
-      ag.addColorStop(0, "oklch(0.40 0.08 200 / 0.08)");
-      ag.addColorStop(1, "oklch(0.40 0.08 200 / 0)");
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.15, 0, Math.PI * 2);
-      ctx.fillStyle = ag;
+      ctx.fillStyle = grads.atmo!;
       ctx.fill();
 
-      if (autoRotateRef.current && !dragRef.current.active) {
-        rotRef.current = [rotRef.current[0] - 0.06, rotRef.current[1]];
-      }
-      animRef.current = requestAnimationFrame(draw);
+      scheduleLoop();
     };
 
-    draw();
+    scheduleLoop();
 
     const getPos = (e: MouseEvent | Touch) => {
       const rect = canvas.getBoundingClientRect();
@@ -363,6 +447,7 @@ export default function GlobeVis({
     canvas.addEventListener("touchend", onTE);
 
     return () => {
+      running = false;
       cancelAnimationFrame(animRef.current);
       window.removeEventListener("resize", resize);
       canvas.removeEventListener("mousedown", onDown);

@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import maplibregl from "maplibre-gl";
+import L from "leaflet";
 import type { LatLng } from "../lib/antipode";
 
 interface Props {
@@ -22,43 +22,30 @@ export default function MapPanel({
   accentColor,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const markerRef = useRef<maplibregl.Marker | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
 
   // Initialise map
   useEffect(() => {
     if (!containerRef.current) return;
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: {
-        version: 8,
-        sources: {
-          osm: {
-            type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            attribution:
-              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          },
-        },
-        layers: [
-          {
-            id: "osm",
-            type: "raster",
-            source: "osm",
-          },
-        ],
-        // Dark-tinted base to match our theme
-        glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
-      },
-      center: [center.lng, center.lat],
+    const map = L.map(containerRef.current, {
+      center: [center.lat, center.lng],
       zoom: 2,
-      attributionControl: {},
-      interactive,
+      zoomControl: false,
+      attributionControl: true,
+      dragging: interactive,
+      scrollWheelZoom: interactive,
+      doubleClickZoom: interactive,
+      touchZoom: interactive,
     });
 
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
     if (interactive) {
-      map.addControl(new maplibregl.NavigationControl(), "bottom-right");
+      L.control.zoom({ position: "bottomright" }).addTo(map);
     }
 
     mapRef.current = map;
@@ -75,8 +62,8 @@ export default function MapPanel({
     const map = mapRef.current;
     if (!map || !onMapClick) return;
 
-    const handler = (e: maplibregl.MapMouseEvent) => {
-      onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+    const handler = (e: L.LeafletMouseEvent) => {
+      onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
     };
     map.on("click", handler);
     return () => {
@@ -95,16 +82,26 @@ export default function MapPanel({
     }
 
     if (marker) {
-      // Create pulsing dot element
       const el = document.createElement("div");
       el.className = "map-marker";
       el.style.setProperty("--accent", accentColor);
 
-      markerRef.current = new maplibregl.Marker({ element: el })
-        .setLngLat([marker.lng, marker.lat])
-        .addTo(map);
+      const icon = L.divIcon({
+        html: el,
+        className: "map-marker-wrapper",
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+      });
 
-      map.flyTo({ center: [marker.lng, marker.lat], zoom: 5, duration: 1800 });
+      markerRef.current = L.marker([marker.lat, marker.lng], { icon }).addTo(
+        map,
+      );
+
+      map.stop(); // cancel any in-progress animation
+      map.flyTo([marker.lat, marker.lng], 5, {
+        duration: 1.8,
+        easeLinearity: 0.15,
+      });
     }
   }, [marker, accentColor]);
 

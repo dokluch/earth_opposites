@@ -533,32 +533,35 @@ a:hover {
   color: var(--text-secondary);
 }
 
-.maplibregl-ctrl-attrib {
+.leaflet-control-attribution {
   font-size: 10px !important;
   background: oklch(0.13 0.02 250 / 0.7) !important;
   color: var(--text-muted) !important;
 }
 
-.maplibregl-ctrl-attrib a {
+.leaflet-control-attribution a {
   color: var(--text-secondary) !important;
 }
 
-.maplibregl-ctrl-group {
+.leaflet-control-zoom {
   background: var(--bg-surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-sm) !important;
 }
 
-.maplibregl-ctrl-group button {
+.leaflet-control-zoom a {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
   border-color: var(--border) !important;
 }
 
-.maplibregl-ctrl-group button + button {
-  border-top-color: var(--border) !important;
+.leaflet-control-zoom a:hover {
+  background: var(--bg-hover) !important;
 }
 
-.maplibregl-ctrl button .maplibregl-ctrl-icon {
-  filter: invert(0.75);
+.map-marker-wrapper {
+  background: none !important;
+  border: none !important;
 }
 
 @keyframes fade-up {
