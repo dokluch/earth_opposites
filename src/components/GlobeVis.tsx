@@ -319,11 +319,46 @@ export default function GlobeVis({
         };
 
         // Draw back-facing point first so front-facing point renders on top
-        const ptA = { coords: pa, vis: visA, color: "oklch(0.72 0.19 150)", hl: "oklch(0.90 0.10 150)", draggable: !!onPointADragRef.current, ll: pA };
-        const ptB = { coords: pb, vis: visB, color: "oklch(0.68 0.20 25)", hl: "oklch(0.85 0.12 25)", draggable: !!onPointBDragRef.current, ll: pB };
-        const [back, front] = visA && !visB ? [ptB, ptA] : visB && !visA ? [ptA, ptB] : distA <= distB ? [ptB, ptA] : [ptA, ptB];
-        drawPt(back.coords, back.vis, back.color, back.hl, back.draggable, back.ll);
-        drawPt(front.coords, front.vis, front.color, front.hl, front.draggable, front.ll);
+        const ptA = {
+          coords: pa,
+          vis: visA,
+          color: "oklch(0.72 0.19 150)",
+          hl: "oklch(0.90 0.10 150)",
+          draggable: !!onPointADragRef.current,
+          ll: pA,
+        };
+        const ptB = {
+          coords: pb,
+          vis: visB,
+          color: "oklch(0.68 0.20 25)",
+          hl: "oklch(0.85 0.12 25)",
+          draggable: !!onPointBDragRef.current,
+          ll: pB,
+        };
+        const [back, front] =
+          visA && !visB
+            ? [ptB, ptA]
+            : visB && !visA
+              ? [ptA, ptB]
+              : distA <= distB
+                ? [ptB, ptA]
+                : [ptA, ptB];
+        drawPt(
+          back.coords,
+          back.vis,
+          back.color,
+          back.hl,
+          back.draggable,
+          back.ll,
+        );
+        drawPt(
+          front.coords,
+          front.vis,
+          front.color,
+          front.hl,
+          front.draggable,
+          front.ll,
+        );
       }
 
       // Rim
